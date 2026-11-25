@@ -91,6 +91,9 @@ Top to bottom; the wrong order breaks behaviour:
 
 ```yaml
 rules:
+  # 0. QUIC rejection — see the note below, this must be first
+  - AND,((NETWORK,udp),(DST-PORT,443)),REJECT
+
   # 1. Google in full — must precede China-Site
   - GEOSITE,google,PROXY
   - DOMAIN-SUFFIX,gstatic.com,PROXY
@@ -133,6 +136,17 @@ rules:
 ```
 
 `China-Site` holds ~136k entries and includes Google static-asset hosts, so anything that must be proxied has to appear above it.
+
+### Why UDP/443 is rejected
+
+In this architecture QUIC travels `mihomo -> SOCKS5 UDP ASSOCIATE -> Kaitu`. That path is
+pathologically slow in practice: a cold `github.com` load used 52 h3 resources with a slowest
+of 25 s, while the single h2 resource took 269 ms. Blocking UDP/443 makes clients fall back to
+TCP immediately and the same page settles at p90 ~0.9 s, slowest ~1 s.
+
+Measure before assuming: load a page in a browser and read `nextHopProtocol` per resource.
+A uniform ~10 s on *everything* after a config reload is not this bug — it is stale fake-ip
+mappings from the reload, and it clears on the next load.
 
 ## Debug logging
 

@@ -129,6 +129,18 @@ A tool session cannot complete a root step on its own — don't wait for a promp
 **11. Editing a script is not applying it.**
 The daemon runs the copy it read at launch. Either `kickstart -k`, or state plainly that the change lands on the next restart. When the edit is a safety net (e.g. re-arming v6 off) and the live system is already safe from a manual one-off, deferring the restart instead of forcing downtime is the right call.
 
+**12. QUIC over the SOCKS5 UDP path stalls pages for 20 s+. This is the "the proxy is slow" bug.**
+Browsers open HTTP/3 (QUIC, UDP/443) by default. Here that traffic goes `mihomo -> SOCKS5 UDP ASSOCIATE -> Kaitu` and crawls: a cold `github.com` load ran 52 h3 resources with the slowest at **25 s**, while the one h2 resource took **269 ms**. Because small requests (HTML, API) are fine, curl testing hides it completely — only a real browser shows it.
+Diagnose by loading a page and reading `nextHopProtocol` per resource, or by comparing the h3 share against total time. Fix with a first-position rule:
+`- AND,((NETWORK,udp),(DST-PORT,443)),REJECT`
+After it: p90 2937 ms -> 945 ms, slowest 18.9 s -> 0.96 s, full load 1.7 s. Cost: video and other QUIC consumers fall back to TCP.
+
+**13. Config reloads invalidate fake-ip mappings and stall the first page load.**
+`PUT /configs` (and a daemon restart) drops the fake-ip records the OS still has cached, so in-flight and immediately following connections fail or retry. Observed as a uniform ~10 s on *every* resource of the first load after a reload, clearing on the next load. Do not misread it as a regression, and warn the user that the minute after a reload is not a fair test.
+
+**14. Do not trust a single latency or throughput sample on this kind of link.**
+The same path measured 0.61x to 2.03x throughput within minutes, and cold page loads swung 1.1 s to 2.9 s. Interleave A/B measurements (alternate configurations round by round, compare medians) or conclusions will follow noise. Two of my own hypotheses (process-lookup cost, TUN stack choice) died under proper interleaving despite looking convincing in one-shot samples.
+
 ## Other platforms
 
 The shape is unchanged; only the plumbing differs.
