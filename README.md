@@ -86,6 +86,7 @@ sudo ~/.config/mihomo-tun/stop-b.sh
 | `SKILL.md` | the full skill: deployment steps, 11 pitfalls, cross-platform notes |
 | `references/mihomo-config.md` | `config.yaml` annotated section by section, rule order, hot reload, debug logging |
 | `references/leak-verification.md` | seven audit checks for egress, DNS and IPv6, with pass criteria |
+| `references/page-load-diagnosis.md` | per-resource protocol and timing recipe for "the page is slow but curl is fine" |
 | `templates/start-b.sh` | root launcher: start mihomo, four-stage DNS repair, disable IPv6, log rotation, watchdog |
 | `templates/stop-b.sh` | roll back to A mode: restore DNS/v6, unload the daemon, Kaitu back to TUN |
 | `templates/kaitu-proxy-keep.sh` | every 120 s, keep Kaitu in proxy mode |

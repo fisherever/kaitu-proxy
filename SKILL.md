@@ -1,6 +1,6 @@
 ---
 name: kaitu-mihomo-proxy
-description: Use when deploying mihomo+Kaitu egress or checking leaks.
+description: Deploy mihomo+Kaitu egress; audit leaks and slow pages.
 version: 1.1.0
 author: fisher, Hermes Agent
 license: MIT
@@ -84,7 +84,7 @@ Critical: Kaitu must stay in `mode: proxy`. The moment it builds its own TUN it 
 
 ## Verification (run after every change)
 
-Full commands live in `references/leak-verification.md`. All six must hold:
+Full commands live in `references/leak-verification.md`. All seven must hold:
 
 1. **Egress geography**: `curl -s https://ipinfo.io/$(curl -s https://api.ipify.org)/json` matches the expected city/country.
 2. **What Google sees**: `curl -s 'https://dns.google/resolve?name=o-o.myaddr.l.google.com&type=TXT'` must return `edns0-client-subnet <your egress>/24`. This is the far end reporting, not an inference.
@@ -92,6 +92,7 @@ Full commands live in `references/leak-verification.md`. All six must hold:
 4. **Physical-NIC capture**: `sudo tcpdump -i <active-nic> -n 'port 53 or port 853'` during cold lookups must show domestic DNS only, never plaintext queries for the target hosts.
 5. **IPv6 closed**: no global v6 address, no v6 default route, v6 connects fail.
 6. **No collateral damage**: domestic sites and the LAN still work.
+7. **Browser protocol sanity**: a cold page load in a real browser reports `h2` only. Any `h3` present means the UDP/443 reject rule is missing or not first — see pitfall 12 and `references/page-load-diagnosis.md`.
 
 ## Pitfalls
 
@@ -131,7 +132,7 @@ The daemon runs the copy it read at launch. Either `kickstart -k`, or state plai
 
 **12. QUIC over the SOCKS5 UDP path stalls pages for 20 s+. This is the "the proxy is slow" bug.**
 Browsers open HTTP/3 (QUIC, UDP/443) by default. Here that traffic goes `mihomo -> SOCKS5 UDP ASSOCIATE -> Kaitu` and crawls: a cold `github.com` load ran 52 h3 resources with the slowest at **25 s**, while the one h2 resource took **269 ms**. Because small requests (HTML, API) are fine, curl testing hides it completely — only a real browser shows it.
-Diagnose by loading a page and reading `nextHopProtocol` per resource, or by comparing the h3 share against total time. Fix with a first-position rule:
+Diagnose by loading a page and reading `nextHopProtocol` per resource — full recipe with the exact browser calls in `references/page-load-diagnosis.md`. Fix with a first-position rule:
 `- AND,((NETWORK,udp),(DST-PORT,443)),REJECT`
 After it: p90 2937 ms -> 945 ms, slowest 18.9 s -> 0.96 s, full load 1.7 s. Cost: video and other QUIC consumers fall back to TCP.
 
@@ -176,11 +177,12 @@ Windows: mihomo with `tun.auto-route` + `strict-route`; Kaitu again in `mode: pr
 |---|---|
 | `references/mihomo-config.md` | `config.yaml` annotated section by section, rule order, hot reload, debug logging |
 | `references/leak-verification.md` | the seven audit checks with exact commands and pass criteria |
+| `references/page-load-diagnosis.md` | per-resource protocol/timing recipe for "the page is slow but curl is fine", and how to read the result |
 
 ## Verification checklist
 
 - `k2b-node status` reports `connected | proxy` and the egress responds
 - `mihomo -t` passes
-- All six audit checks green
+- All seven audit checks green
 - Domestic and LAN traffic unaffected: `curl www.baidu.com` 200, `curl http://<gateway>` 200
 - Zero global IPv6 addresses
