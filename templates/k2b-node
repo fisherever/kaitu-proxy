@@ -1,0 +1,159 @@
+#!/usr/bin/python3
+"""k2b-node — node inspection and sync for the B architecture (Kaitu provides the SOCKS5 egress)
+
+  k2b-node status   current node + egress IP
+  k2b-node sync     rewrite the node Kaitu is currently connected to as proxy mode (keeps your pick)
+  k2b-node list     list the locally cached node inventory (view only)
+
+Switch nodes by picking one in the Kaitu App and connecting, then run `k2b-node sync`
+(or wait up to 2 minutes for the keepalive to convert it).
+
+Do NOT switch by assembling a URL from the cached list — the cert pins in that cache go stale
+and the node then fails with `tls: failed to verify certificate`.
+"""
+import glob
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+import time
+import urllib.parse
+
+K = "/Applications/Kaitu.app/Contents/MacOS/k2"
+YAML_PATH = os.path.expanduser("~/.config/mihomo-tun/kaitu-proxy.yaml")
+CACHE_KEY = "kaitu_cache:api:tunnels"
+
+TEMPLATE = """server: "{url}"
+mode: proxy
+proxy:
+  listen: 127.0.0.1:1080
+dns:
+  direct:
+    - 114.114.114.114:53
+    - 223.5.5.5:53
+  proxy:
+    - 8.8.8.8:53
+    - 1.1.1.1:53
+routes:
+  - match:
+      all: true
+    via: "{url}"
+"""
+
+
+def status_json():
+    out = subprocess.run([K, "status"], capture_output=True, text=True).stdout
+    try:
+        return json.loads(out)
+    except ValueError:
+        return {}
+
+
+def current_server():
+    try:
+        with open(YAML_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                m = re.match(r'^server:\s*"?(.+?)"?\s*$', line)
+                if m:
+                    return m.group(1)
+    except OSError:
+        pass
+    return ""
+
+
+def live_server(st):
+    for r in (st.get("config", {}).get("routes") or []):
+        via = str(r.get("via", ""))
+        if via.startswith("k2v5://"):
+            return via
+    return ""
+
+
+def node_host(url):
+    if not url:
+        return "(not set)"
+    return urllib.parse.urlsplit(url).netloc.split("@")[-1].split("?")[0]
+
+
+def egress():
+    for url in ("https://api.ipify.org", "https://ipinfo.io/ip"):
+        try:
+            out = subprocess.run(["curl", "-s", "-m", "8", url],
+                                 capture_output=True, text=True).stdout.strip()
+            if out:
+                return out
+        except Exception:
+            continue
+    return "?"
+
+
+def cmd_status():
+    st = status_json()
+    live = live_server(st)
+    srv = live or current_server()
+    print("state:", st.get("state"), "| mode:", st.get("config", {}).get("mode"))
+    print("node:", node_host(srv), "| egress:", egress())
+
+
+def cmd_sync():
+    st = status_json()
+    if st.get("state") != "connected":
+        raise SystemExit("Kaitu is not connected: pick a node in the App and Connect (or run k2 up), then retry")
+    url = live_server(st)
+    if not url:
+        raise SystemExit("cannot read the current node URL (no k2v5:// route in the status output)")
+    with open(YAML_PATH, "w", encoding="utf-8") as f:
+        f.write(TEMPLATE.format(url=url))
+    os.chmod(YAML_PATH, 0o600)
+    subprocess.run([K, "up", YAML_PATH], capture_output=True, text=True)
+    time.sleep(4)
+    st2 = status_json()
+    print("synced to proxy mode:", st2.get("state"), st2.get("config", {}).get("mode"),
+          "| node:", node_host(url), "| egress:", egress())
+
+
+def cmd_list():
+    pattern = os.path.expanduser(
+        "~/Library/WebKit/io.kaitu.desktop/**/LocalStorage/localstorage.sqlite3")
+    cur = node_host(live_server(status_json()) or current_server())
+    shown = 0
+    for path in glob.glob(pattern, recursive=True):
+        try:
+            con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+            row = con.execute("select count(*) from ItemTable where key=?", (CACHE_KEY,)).fetchone()
+            if not (row and row[0]):
+                continue
+            raw = con.execute("select value from ItemTable where key=?", (CACHE_KEY,)).fetchone()[0]
+            items = json.loads(raw.decode("utf-16-le"))["data"]["items"]
+            for item in items:
+                node = item["node"]
+                mark = "*" if node_host(item["serverUrl"]) == cur else " "
+                print("%s %-10s %-20s %-16s load=%s" % (
+                    mark, item["name"], node.get("region", ""), str(node.get("ipv4")), node.get("load")))
+                shown += 1
+            break
+        except sqlite3.Error:
+            continue
+    if not shown:
+        print("(no cached inventory; open the node list in the App once)")
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return
+    cmd = argv[0]
+    if cmd == "status":
+        cmd_status()
+    elif cmd == "sync":
+        cmd_sync()
+    elif cmd == "list":
+        cmd_list()
+    else:
+        print(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

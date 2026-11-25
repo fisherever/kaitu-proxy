@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Root LaunchDaemon: runs start-b.sh (launchd supervises the script; the script starts mihomo)
+
+  Install:
+    sudo cp com.fisher.k2b.plist /Library/LaunchDaemons/
+    sudo chown root:wheel /Library/LaunchDaemons/com.fisher.k2b.plist
+    sudo chmod 644 /Library/LaunchDaemons/com.fisher.k2b.plist
+    sudo launchctl bootstrap system /Library/LaunchDaemons/com.fisher.k2b.plist
+
+  Restart after editing start-b.sh:
+    sudo launchctl kickstart -k system/com.fisher.k2b
+
+  Note: change the Label and the paths per device.
+-->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.fisher.k2b</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string><string>/Users/fisher/.config/mihomo-tun/start-b.sh</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>60</integer>
+  <key>StandardOutPath</key><string>/Users/fisher/.config/mihomo-tun/daemon.log</string>
+  <key>StandardErrorPath</key><string>/Users/fisher/.config/mihomo-tun/daemon.err</string>
+</dict></plist>

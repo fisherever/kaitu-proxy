@@ -1,0 +1,15 @@
+# Node credentials and runtime state — never versioned
+kaitu-proxy.yaml
+config.yaml
+boot.log
+boot.log.*
+*.pcap
+secret.txt
+cache.db
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/

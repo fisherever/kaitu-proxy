@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  User-level LaunchAgent: every 120s, keep Kaitu in proxy mode.
+
+  Install:
+    cp com.fisher.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.fisher.kaitu-proxy-keep.plist
+
+  The script itself checks whether com.fisher.k2b is running and whether the mihomo process
+  exists, and exits immediately if either is missing.
+-->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.fisher.kaitu-proxy-keep</string>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>/Users/fisher/.config/mihomo-tun/kaitu-proxy-keep.sh</string></array>
+  <key>StartInterval</key><integer>120</integer>
+  <key>RunAtLoad</key><true/>
+</dict></plist>
