@@ -60,12 +60,12 @@ grep -c "__HOME__" /tmp/kaitu-proxy/* 2>/dev/null | grep -v ":0" && echo "WARNIN
 # 5. Install the daemons (needs root)
 sudo cp /tmp/kaitu-proxy/start-b.sh ~/.config/mihomo-tun/
 sudo cp /tmp/kaitu-proxy/stop-b.sh  ~/.config/mihomo-tun/
-sudo cp /tmp/kaitu-proxy/com.fisher.k2b.plist /Library/LaunchDaemons/
-sudo launchctl bootstrap system /Library/LaunchDaemons/com.fisher.k2b.plist
+sudo cp /tmp/kaitu-proxy/local.mihomo.k2b.plist /Library/LaunchDaemons/
+sudo launchctl bootstrap system /Library/LaunchDaemons/local.mihomo.k2b.plist
 
 # 6. Install the keepalive (user level)
-cp /tmp/kaitu-proxy/com.fisher.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.fisher.kaitu-proxy-keep.plist
+cp /tmp/kaitu-proxy/local.mihomo.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.mihomo.kaitu-proxy-keep.plist
 ```
 
 `__HOME__` is a placeholder on purpose: the launcher is started by launchd in the root domain,
@@ -90,8 +90,8 @@ sudo ~/.config/mihomo-tun/stop-b.sh
 | `templates/stop-b.sh` | roll back to A mode: restore DNS/v6, unload the daemon, Kaitu back to TUN |
 | `templates/kaitu-proxy-keep.sh` | every 120 s, keep Kaitu in proxy mode |
 | `templates/k2b-node` | `status` / `sync` / `list` CLI |
-| `templates/com.fisher.k2b.plist` | root LaunchDaemon |
-| `templates/com.fisher.kaitu-proxy-keep.plist` | user LaunchAgent |
+| `templates/local.mihomo.k2b.plist` | root LaunchDaemon |
+| `templates/local.mihomo.kaitu-proxy-keep.plist` | user LaunchAgent |
 
 Only a few values need changing per device: the `D` / `K` / `MH` paths inside the scripts, the plist `Label`s, and the NIC name in `relink_wifi()` (`en0` is Wi-Fi; wired adapters differ).
 

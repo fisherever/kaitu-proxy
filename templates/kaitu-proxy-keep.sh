@@ -6,9 +6,9 @@
 #   offline -> reconnect using the saved credentials
 # Pure bash + sed, no python/yaml dependency.
 #
-# Per-device: substitute __HOME__ (see README) and change the pgrep path and launchctl label.
+# Per-device: substitute __HOME__ (see README).
+# The guard checks the mihomo process only, so it stays correct if the launchd label is renamed.
 H=__HOME__
-launchctl print system/com.fisher.k2b >/dev/null 2>&1 || exit 0
 pgrep -f "$H/.local/bin/mihomo" >/dev/null 2>&1 || exit 0
 
 K=/Applications/Kaitu.app/Contents/MacOS/k2

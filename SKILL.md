@@ -67,12 +67,12 @@ Critical: Kaitu must stay in `mode: proxy`. The moment it builds its own TUN it 
 
 6. **Validate the config**: `mihomo -t -d <dir> -f <dir>/config.yaml` must print `test is successful`.
 
-7. **Install the root daemon** `com.fisher.k2b` running `start-b.sh` (`templates/start-b.sh`), `KeepAlive: true`.
+7. **Install the root daemon** `local.mihomo.k2b` running `start-b.sh` (`templates/start-b.sh`), `KeepAlive: true`.
    The templates carry a `__HOME__` placeholder — launchd runs the launcher in the root domain, where `$HOME` is `/var/root`, so expand it before installing:
    `for f in templates/*; do sed "s|__HOME__|$HOME|g" "$f" > "/tmp/$(basename "$f")"; done`
    Done when: `ifconfig | grep 'inet 198.18.0.1'` returns a line.
 
-8. **Install the user-level keepalive** `com.fisher.kaitu-proxy-keep` (`templates/kaitu-proxy-keep.sh`, `StartInterval 120`).
+8. **Install the user-level keepalive** `local.mihomo.kaitu-proxy-keep` (`templates/kaitu-proxy-keep.sh`, `StartInterval 120`).
 
 9. **Hot-reload rule changes instead of restarting**:
    ```bash
@@ -135,7 +135,7 @@ The shape is unchanged; only the plumbing differs.
 
 | macOS | Linux |
 |---|---|
-| launchd `com.fisher.k2b` | systemd unit with `Restart=always` |
+| launchd `local.mihomo.k2b` | systemd unit with `Restart=always` |
 | `networksetup -setdnsservers` / `-setv6off` | `resolvectl dns` / `sysctl net.ipv6.conf.all.disable_ipv6=1` |
 | `dscacheutil` + `mDNSResponder` | `resolvectl flush-caches` |
 | `ifconfig utun` | `ip addr show` |
@@ -155,8 +155,8 @@ Windows: mihomo with `tun.auto-route` + `strict-route`; Kaitu again in `mode: pr
 | `templates/stop-b.sh` | roll back to A mode: restore DNS/v6, unload the daemon, Kaitu back to TUN |
 | `templates/kaitu-proxy-keep.sh` | every 120 s, keep Kaitu in proxy mode |
 | `templates/k2b-node` | `status` / `sync` / `list` CLI |
-| `templates/com.fisher.k2b.plist` | root LaunchDaemon |
-| `templates/com.fisher.kaitu-proxy-keep.plist` | user LaunchAgent |
+| `templates/local.mihomo.k2b.plist` | root LaunchDaemon |
+| `templates/local.mihomo.kaitu-proxy-keep.plist` | user LaunchAgent |
 
 `references/`:
 

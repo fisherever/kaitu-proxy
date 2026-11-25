@@ -17,9 +17,9 @@ for svc in $(networksetup -listallnetworkservices | tail -n +2); do
 done
 dscacheutil -flushcache
 
-echo "2) Unloading root daemon com.fisher.k2b"
-launchctl bootout system/com.fisher.k2b 2>/dev/null && echo "   unloaded" || echo "   was not loaded"
-rm -f /Library/LaunchDaemons/com.fisher.k2b.plist
+echo "2) Unloading root daemon local.mihomo.k2b"
+launchctl bootout system/local.mihomo.k2b 2>/dev/null && echo "   unloaded" || echo "   was not loaded"
+rm -f /Library/LaunchDaemons/local.mihomo.k2b.plist
 pkill -f "$MH" 2>/dev/null && echo "   mihomo stopped"
 
 echo "3) Kaitu back to TUN mode"
