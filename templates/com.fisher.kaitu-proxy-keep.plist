@@ -7,12 +7,15 @@
     cp com.fisher.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.fisher.kaitu-proxy-keep.plist
 
+  __HOME__ is a placeholder — launchd expands neither $HOME nor ~.
+  Expand it before installing:  sed "s|__HOME__|$HOME|g" com.fisher.kaitu-proxy-keep.plist > /tmp/com.fisher.kaitu-proxy-keep.plist
+
   The script itself checks whether com.fisher.k2b is running and whether the mihomo process
   exists, and exits immediately if either is missing.
 -->
 <plist version="1.0"><dict>
   <key>Label</key><string>com.fisher.kaitu-proxy-keep</string>
-  <key>ProgramArguments</key><array><string>/bin/bash</string><string>/Users/fisher/.config/mihomo-tun/kaitu-proxy-keep.sh</string></array>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>__HOME__/.config/mihomo-tun/kaitu-proxy-keep.sh</string></array>
   <key>StartInterval</key><integer>120</integer>
   <key>RunAtLoad</key><true/>
 </dict></plist>

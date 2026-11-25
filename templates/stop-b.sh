@@ -2,10 +2,11 @@
 # Roll back to A mode (plain Kaitu): restore DHCP DNS + IPv6, Kaitu back to TUN, unload the daemon
 # Usage: sudo ./stop-b.sh
 #
-# Per-device changes: D / K / MH below, and the bootout label
-D=/Users/fisher/.config/mihomo-tun
+# Per-device: substitute __HOME__ (see README) and change the bootout label.
+H=__HOME__
+D=$H/.config/mihomo-tun
 K=/Applications/Kaitu.app/Contents/MacOS/k2
-MH=/Users/fisher/.local/bin/mihomo
+MH=$H/.local/bin/mihomo
 
 echo "1) Restoring DHCP DNS and IPv6 Automatic"
 for svc in $(networksetup -listallnetworkservices | tail -n +2); do

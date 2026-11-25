@@ -6,13 +6,13 @@
 #   offline -> reconnect using the saved credentials
 # Pure bash + sed, no python/yaml dependency.
 #
-# Per-device changes: K (Kaitu CLI), Y (kaitu-proxy.yaml path), plus the pgrep path and the
-# launchctl label below.
+# Per-device: substitute __HOME__ (see README) and change the pgrep path and launchctl label.
+H=__HOME__
 launchctl print system/com.fisher.k2b >/dev/null 2>&1 || exit 0
-pgrep -f "/Users/fisher/.local/bin/mihomo" >/dev/null 2>&1 || exit 0
+pgrep -f "$H/.local/bin/mihomo" >/dev/null 2>&1 || exit 0
 
 K=/Applications/Kaitu.app/Contents/MacOS/k2
-Y=/Users/fisher/.config/mihomo-tun/kaitu-proxy.yaml
+Y=$H/.config/mihomo-tun/kaitu-proxy.yaml
 
 S=$($K status 2>/dev/null)
 ST=$(printf '%s' "$S" | sed -n 's/.*"state"[[:space:]]*:[[:space:]]*"\([a-z]*\)".*/\1/p' | head -1)

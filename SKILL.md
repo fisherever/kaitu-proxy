@@ -68,6 +68,8 @@ Critical: Kaitu must stay in `mode: proxy`. The moment it builds its own TUN it 
 6. **Validate the config**: `mihomo -t -d <dir> -f <dir>/config.yaml` must print `test is successful`.
 
 7. **Install the root daemon** `com.fisher.k2b` running `start-b.sh` (`templates/start-b.sh`), `KeepAlive: true`.
+   The templates carry a `__HOME__` placeholder — launchd runs the launcher in the root domain, where `$HOME` is `/var/root`, so expand it before installing:
+   `for f in templates/*; do sed "s|__HOME__|$HOME|g" "$f" > "/tmp/$(basename "$f")"; done`
    Done when: `ifconfig | grep 'inet 198.18.0.1'` returns a line.
 
 8. **Install the user-level keepalive** `com.fisher.kaitu-proxy-keep` (`templates/kaitu-proxy-keep.sh`, `StartInterval 120`).

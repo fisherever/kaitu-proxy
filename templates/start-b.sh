@@ -1,7 +1,7 @@
 #!/bin/bash
 # B-architecture launcher (root) — Kaitu (SOCKS5 1080) → mihomo (TUN + rules + fake-ip DNS)
 #
-# Per-device changes: the three variables below (D, K, MH), and the NIC name in relink_wifi().
+# Per-device changes: the three variables above (D, K, MH), and the NIC name in relink_wifi().
 #
 # DNS is the most fragile part: service config says 198.18.0.2, but the active resolver can
 # still be pinned to DHCP (macOS only pushes prefs down to the State layer when the link is
@@ -10,9 +10,14 @@
 #   2) HUP configd + flush the resolver cache
 #   3) still broken -> bounce the NIC to rebuild the link
 #   4) background watchdog re-checks every 60s using REAL resolution, not the config
-D=/Users/fisher/.config/mihomo-tun
+# Per-device: substitute __HOME__ (see README) and set the NIC name in relink_wifi().
+#
+# The home directory is a placeholder, not $HOME: launchd runs this script as root,
+# where $HOME is /var/root.
+H=__HOME__
+D=$H/.config/mihomo-tun
 K=/Applications/Kaitu.app/Contents/MacOS/k2
-MH=/Users/fisher/.local/bin/mihomo
+MH=$H/.local/bin/mihomo
 
 # Log rotation: boot.log is root-owned and mihomo inherited this fd.
 # Truncate (": >"), never rename — after a rename the process keeps writing to the old inode

@@ -52,16 +52,26 @@ mihomo -t -d ~/.config/mihomo-tun -f ~/.config/mihomo-tun/config.yaml
 ./templates/k2b-node sync
 ./templates/k2b-node status      # expect: state: connected | mode: proxy
 
-# 4. Install the daemons (needs root)
-sudo cp templates/start-b.sh ~/.config/mihomo-tun/
-sudo cp templates/stop-b.sh  ~/.config/mihomo-tun/
-sudo cp templates/com.fisher.k2b.plist /Library/LaunchDaemons/
+# 4. Expand the __HOME__ placeholders (launchd and the root daemon cannot use $HOME)
+mkdir -p /tmp/kaitu-proxy
+for f in templates/*; do sed "s|__HOME__|$HOME|g" "$f" > "/tmp/kaitu-proxy/$(basename "$f")"; done
+grep -c "__HOME__" /tmp/kaitu-proxy/* 2>/dev/null | grep -v ":0" && echo "WARNING: placeholder left" || echo "placeholders expanded"
+
+# 5. Install the daemons (needs root)
+sudo cp /tmp/kaitu-proxy/start-b.sh ~/.config/mihomo-tun/
+sudo cp /tmp/kaitu-proxy/stop-b.sh  ~/.config/mihomo-tun/
+sudo cp /tmp/kaitu-proxy/com.fisher.k2b.plist /Library/LaunchDaemons/
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.fisher.k2b.plist
 
-# 5. Install the keepalive (user level)
-cp templates/com.fisher.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
+# 6. Install the keepalive (user level)
+cp /tmp/kaitu-proxy/com.fisher.kaitu-proxy-keep.plist ~/Library/LaunchAgents/
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.fisher.kaitu-proxy-keep.plist
 ```
+
+`__HOME__` is a placeholder on purpose: the launcher is started by launchd in the root domain,
+where `$HOME` is `/var/root`, so neither `$HOME` nor `~` expands correctly. `sed` at install time
+is the only form that works for both the scripts and the plists. `k2b-node` has no placeholder —
+it resolves paths via `expanduser()` at runtime.
 
 Roll back to plain Kaitu TUN mode:
 

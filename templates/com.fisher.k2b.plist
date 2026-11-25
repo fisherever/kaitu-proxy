@@ -12,16 +12,18 @@
   Restart after editing start-b.sh:
     sudo launchctl kickstart -k system/com.fisher.k2b
 
-  Note: change the Label and the paths per device.
+  Note: __HOME__ is a placeholder — launchd expands neither $HOME nor ~.
+  Expand it before installing:  sed "s|__HOME__|$HOME|g" com.fisher.k2b.plist > /tmp/com.fisher.k2b.plist
+  Also change the Label per device.
 -->
 <plist version="1.0"><dict>
   <key>Label</key><string>com.fisher.k2b</string>
   <key>ProgramArguments</key><array>
-    <string>/bin/bash</string><string>/Users/fisher/.config/mihomo-tun/start-b.sh</string>
+    <string>/bin/bash</string><string>__HOME__/.config/mihomo-tun/start-b.sh</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ThrottleInterval</key><integer>60</integer>
-  <key>StandardOutPath</key><string>/Users/fisher/.config/mihomo-tun/daemon.log</string>
-  <key>StandardErrorPath</key><string>/Users/fisher/.config/mihomo-tun/daemon.err</string>
+  <key>StandardOutPath</key><string>__HOME__/.config/mihomo-tun/daemon.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/.config/mihomo-tun/daemon.err</string>
 </dict></plist>
